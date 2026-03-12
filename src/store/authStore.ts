@@ -12,13 +12,14 @@ interface AuthState {
   hasRole: (...roles: string[]) => boolean;
   isManager: () => boolean;
   isAdmin: () => boolean;
+   isAuthenticated: boolean;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   token: localStorage.getItem('agentcrm_token'),
   loading: false,
-
+ isAuthenticated: !!localStorage.getItem('agentcrm_token'),
   login: async (email, password) => {
     const res = await api.post('/auth/login', { email, password });
     const { user, accessToken } = res.data;

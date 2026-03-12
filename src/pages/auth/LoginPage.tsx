@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { LogIn } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../../store/authStore';
@@ -10,7 +10,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const login = useAuthStore((s) => s.login);
   const navigate = useNavigate();
-
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
@@ -29,6 +29,11 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+
+if (isAuthenticated) {
+  return <Navigate to="/dashboard" replace />;
+}
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">

@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/auth/LoginPage';
 import AppShell from './components/layout/AppShell';
 import LoadingSpinner from './components/ui/LoadingSpinner';
+import ProtectedRoute from './utils/ProtectedRoute';
 
 const DashboardPage = React.lazy(() => import('./pages/dashboard/DashboardPage'));
 const AccountListPage = React.lazy(() => import('./pages/accounts/AccountListPage'));
@@ -30,35 +31,37 @@ export default function App() {
         </div>
       }
     >
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
+   <Routes>
+  <Route path="/login" element={<LoginPage />} />
 
-        <Route path="/" element={<AppShell />}>
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard" element={<DashboardPage />} />
+  <Route element={<ProtectedRoute />}>
+    <Route path="/" element={<AppShell />}>
+      <Route index element={<Navigate to="/dashboard" replace />} />
+      <Route path="dashboard" element={<DashboardPage />} />
 
-          <Route path="accounts" element={<AccountListPage />} />
-          <Route path="accounts/:id" element={<AccountDetailPage />} />
+      <Route path="accounts" element={<AccountListPage />} />
+      <Route path="accounts/:id" element={<AccountDetailPage />} />
 
-          <Route path="contacts" element={<ContactListPage />} />
-          <Route path="contacts/:id" element={<ContactDetailPage />} />
+      <Route path="contacts" element={<ContactListPage />} />
+      <Route path="contacts/:id" element={<ContactDetailPage />} />
 
-          <Route path="leads" element={<LeadListPage />} />
-          <Route path="leads/:id" element={<LeadDetailPage />} />
+      <Route path="leads" element={<LeadListPage />} />
+      <Route path="leads/:id" element={<LeadDetailPage />} />
 
-          <Route path="opportunities" element={<OpportunityListPage />} />
-          <Route path="opportunities/pipeline" element={<PipelineKanbanPage />} />
-          <Route path="opportunities/forecast" element={<ForecastPage />} />
-          <Route path="opportunities/:id" element={<OpportunityDetailPage />} />
-          <Route path="opportunities/:id/validation" element={<SAValidationPage />} />
+      <Route path="opportunities" element={<OpportunityListPage />} />
+      <Route path="opportunities/pipeline" element={<PipelineKanbanPage />} />
+      <Route path="opportunities/forecast" element={<ForecastPage />} />
+      <Route path="opportunities/:id" element={<OpportunityDetailPage />} />
+      <Route path="opportunities/:id/validation" element={<SAValidationPage />} />
 
-          <Route path="campaigns" element={<CampaignListPage />} />
-          <Route path="campaigns/:id" element={<CampaignDetailPage />} />
+      <Route path="campaigns" element={<CampaignListPage />} />
+      <Route path="campaigns/:id" element={<CampaignDetailPage />} />
 
-          <Route path="tasks" element={<TaskListPage />} />
-          <Route path="settings" element={<SettingsPage />} />
-        </Route>
-      </Routes>
+      <Route path="tasks" element={<TaskListPage />} />
+      <Route path="settings" element={<SettingsPage />} />
+    </Route>
+  </Route>
+</Routes>
     </Suspense>
   );
 }

@@ -30,7 +30,8 @@ login: async (email, password) => {
 
   set({
     user,
-    token: accessToken
+    token: accessToken,
+    isAuthenticated: true
   });
 },
 
@@ -40,22 +41,36 @@ logout: () => {
 
   set({
     user: null,
-    token: null
+    token: null,
+    isAuthenticated: false
   });
 
   window.location.href = '/login';
 },
 
-  loadUser: async () => {
-    try {
-      set({ loading: true });
-      const res = await api.get('/auth/me');
-      set({ user: res.data, loading: false });
-    } catch {
-      set({ user: null, token: null, loading: false });
-      localStorage.removeItem('agentcrm_token');
-    }
-  },
+loadUser: async () => {
+  try {
+    set({ loading: true });
+
+    const res = await api.get('/auth/me');
+
+    set({
+      user: res.data,
+      loading: false,
+      isAuthenticated: true
+    });
+
+  } catch {
+    set({
+      user: null,
+      token: null,
+      loading: false,
+      isAuthenticated: false
+    });
+
+    localStorage.removeItem('agentcrm_token');
+  }
+},
 
   hasRole: (...roles) => {
     const user = get().user;

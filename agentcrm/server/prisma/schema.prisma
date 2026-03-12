@@ -1,0 +1,393 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  role         String   @default("SALES_REP")
+  managerId    Int?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  manager  User?  @relation("UserManager", fields: [managerId], references: [id])
+  reports  User[] @relation("UserManager")
+
+  accounts      Account[]
+  leads         Lead[]
+  opportunities Opportunity[]
+  tasks         Task[]
+  activities    Activity[]
+  notifications Notification[]
+  campaigns     Campaign[]
+
+  @@index([managerId])
+  @@index([role])
+  @@index([email])
+}
+
+model Account {
+  id             Int       @id @default(autoincrement())
+  companyName    String
+  website        String?
+  industry       String?
+  companySize    String?
+  country        String?
+  ownerId        Int
+  status         String    @default("PROSPECT")
+  annualRevenue  Float?
+  healthScore    Int       @default(50)
+  lastActivityAt DateTime?
+  source         String?
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  owner         User              @relation(fields: [ownerId], references: [id])
+  contacts      Contact[]
+  leads         Lead[]
+  opportunities Opportunity[]
+  signals       AccountSignal[]
+  techTags      AccountTechTag[]
+  activities    Activity[]
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([industry])
+  @@index([healthScore])
+  @@index([lastActivityAt])
+}
+
+model AccountTechTag {
+  id        Int    @id @default(autoincrement())
+  accountId Int
+  tag       String
+
+  account Account @relation(fields: [accountId], references: [id])
+
+  @@unique([accountId, tag])
+  @@index([accountId])
+  @@index([tag])
+}
+
+model Contact {
+  id                 Int       @id @default(autoincrement())
+  firstName          String
+  lastName           String
+  accountId          Int
+  jobTitle           String?
+  roleType           String    @default("END_USER")
+  email              String?
+  phone              String?
+  linkedinUrl        String?
+  department         String?
+  communicationStyle String?
+  lastContactedAt    DateTime?
+  doNotContact       Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  account              Account              @relation(fields: [accountId], references: [id])
+  opportunities        Opportunity[]
+  activities           Activity[]
+  campaignEnrollments  CampaignEnrollment[]
+
+  @@index([accountId])
+  @@index([email])
+  @@index([roleType])
+  @@index([lastContactedAt])
+}
+
+model Lead {
+  id                     Int       @id @default(autoincrement())
+  firstName              String
+  lastName               String
+  email                  String
+  accountId              Int?
+  stage                  String    @default("NEW")
+  aiScore                Int       @default(0)
+  source                 String?
+  assignedRepId          Int?
+  convertedOpportunityId Int?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  account         Account?        @relation(fields: [accountId], references: [id])
+  assignedRep     User?           @relation(fields: [assignedRepId], references: [id])
+  scoreLogs       LeadScoreLog[]
+  activities      Activity[]
+  dealCoachBriefs DealCoachBrief[]
+
+  @@index([accountId])
+  @@index([assignedRepId])
+  @@index([stage])
+  @@index([aiScore])
+  @@index([email])
+  @@index([createdAt])
+}
+
+model Opportunity {
+  id                    Int       @id @default(autoincrement())
+  name                  String
+  accountId             Int
+  primaryContactId      Int?
+  dealValue             Float     @default(0)
+  expectedCloseDate     DateTime?
+  stage                 String    @default("DISCOVERY")
+  probability           Int       @default(10)
+  description           String?
+  ownerId               Int
+  solutionArchitectId   Int?
+  winReason             String?
+  lostReason            String?
+  proposalValueAtSubmit Float?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  account              Account               @relation(fields: [accountId], references: [id])
+  primaryContact       Contact?              @relation(fields: [primaryContactId], references: [id])
+  owner                User                  @relation(fields: [ownerId], references: [id])
+  activities           Activity[]
+  dealCoachBriefs      DealCoachBrief[]
+  validationChecklists ValidationChecklist[]
+  solutionHandoff      SolutionHandoff?
+
+  @@index([accountId])
+  @@index([primaryContactId])
+  @@index([ownerId])
+  @@index([stage])
+  @@index([expectedCloseDate])
+  @@index([solutionArchitectId])
+}
+
+model AccountSignal {
+  id         Int      @id @default(autoincrement())
+  accountId  Int
+  signalType String
+  title      String
+  summary    String
+  severity   String   @default("MEDIUM")
+  isActioned Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  account Account @relation(fields: [accountId], references: [id])
+
+  @@index([accountId])
+  @@index([signalType])
+  @@index([severity])
+  @@index([isActioned])
+  @@index([createdAt])
+}
+
+model LeadScoreLog {
+  id            Int      @id @default(autoincrement())
+  leadId        Int
+  previousScore Int
+  newScore      Int
+  reason        String
+  createdAt     DateTime @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id])
+
+  @@index([leadId])
+  @@index([createdAt])
+}
+
+model DealCoachBrief {
+  id            Int      @id @default(autoincrement())
+  opportunityId Int?
+  leadId        Int?
+  briefType     String   @default("PRE_CALL")
+  content       String
+  createdAt     DateTime @default(now())
+
+  opportunity Opportunity? @relation(fields: [opportunityId], references: [id])
+  lead        Lead?        @relation(fields: [leadId], references: [id])
+
+  @@index([opportunityId])
+  @@index([leadId])
+  @@index([briefType])
+}
+
+model Task {
+  id                Int       @id @default(autoincrement())
+  title             String
+  description       String?
+  assignedToId      Int
+  dueDate           DateTime?
+  priority          String    @default("MEDIUM")
+  status            String    @default("PENDING")
+  relatedEntityType String?
+  relatedEntityId   Int?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  assignedTo User @relation(fields: [assignedToId], references: [id])
+
+  @@index([assignedToId])
+  @@index([status])
+  @@index([priority])
+  @@index([dueDate])
+  @@index([relatedEntityType, relatedEntityId])
+}
+
+model Activity {
+  id            Int      @id @default(autoincrement())
+  type          String
+  description   String
+  userId        Int
+  accountId     Int?
+  contactId     Int?
+  leadId        Int?
+  opportunityId Int?
+  metadata      String?
+  createdAt     DateTime @default(now())
+
+  user        User         @relation(fields: [userId], references: [id])
+  account     Account?     @relation(fields: [accountId], references: [id])
+  contact     Contact?     @relation(fields: [contactId], references: [id])
+  lead        Lead?        @relation(fields: [leadId], references: [id])
+  opportunity Opportunity? @relation(fields: [opportunityId], references: [id])
+
+  @@index([userId])
+  @@index([accountId])
+  @@index([contactId])
+  @@index([leadId])
+  @@index([opportunityId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  title     String
+  message   String
+  type      String   @default("GENERAL")
+  isRead    Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model Campaign {
+  id            Int      @id @default(autoincrement())
+  name          String
+  description   String?
+  createdById   Int
+  status        String   @default("DRAFT")
+  targetSegment String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  createdBy   User                 @relation(fields: [createdById], references: [id])
+  steps       CampaignStep[]
+  enrollments CampaignEnrollment[]
+
+  @@index([createdById])
+  @@index([status])
+}
+
+model CampaignStep {
+  id           Int      @id @default(autoincrement())
+  campaignId   Int
+  stepOrder    Int
+  subject      String
+  bodyTemplate String
+  delayDays    Int      @default(1)
+  createdAt    DateTime @default(now())
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@index([campaignId, stepOrder])
+}
+
+model CampaignEnrollment {
+  id          Int       @id @default(autoincrement())
+  campaignId  Int
+  contactId   Int
+  currentStep Int       @default(0)
+  status      String    @default("ACTIVE")
+  enrolledAt  DateTime  @default(now())
+  lastSentAt  DateTime?
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  contact  Contact  @relation(fields: [contactId], references: [id])
+
+  @@unique([campaignId, contactId])
+  @@index([campaignId])
+  @@index([contactId])
+  @@index([status])
+}
+
+model ValidationChecklist {
+  id            Int       @id @default(autoincrement())
+  opportunityId Int
+  type          String
+  items         String
+  completedAt   DateTime?
+  completedById Int?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id])
+
+  @@unique([opportunityId, type])
+  @@index([opportunityId])
+  @@index([type])
+}
+
+model SolutionHandoff {
+  id                      Int      @id @default(autoincrement())
+  opportunityId           Int      @unique
+  finalArchitecture       String?
+  keyDecisions            String?
+  technicalRisks          String?
+  assumptions             String?
+  deliveryTeamComposition String?
+  phaseBreakdown          String?
+  status                  String   @default("DRAFT")
+  createdById             Int?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id])
+
+  @@index([opportunityId])
+  @@index([status])
+}
+
+model AssignmentRule {
+  id        Int      @id @default(autoincrement())
+  type      String   @default("ROUND_ROBIN")
+  config    String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+  @@index([isActive])
+}
+
+model AgentConfig {
+  id        Int      @id @default(autoincrement())
+  agentType String   @unique
+  config    String
+  updatedAt DateTime @updatedAt
+}

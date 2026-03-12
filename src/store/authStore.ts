@@ -20,18 +20,31 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   token: localStorage.getItem('agentcrm_token'),
   loading: false,
  isAuthenticated: !!localStorage.getItem('agentcrm_token'),
-  login: async (email, password) => {
-    const res = await api.post('/auth/login', { email, password });
-    const { user, accessToken } = res.data;
-    localStorage.setItem('agentcrm_token', accessToken);
-    set({ user, token: accessToken });
-  },
+login: async (email, password) => {
+  const res = await api.post('/auth/login', { email, password });
 
-  logout: () => {
-    localStorage.removeItem('agentcrm_token');
-    set({ user: null, token: null });
-    window.location.href = '/login';
-  },
+  const { user, accessToken, refreshToken } = res.data;
+
+  localStorage.setItem('agentcrm_token', accessToken);
+  localStorage.setItem('agentcrm_refresh', refreshToken);
+
+  set({
+    user,
+    token: accessToken
+  });
+},
+
+logout: () => {
+  localStorage.removeItem('agentcrm_token');
+  localStorage.removeItem('agentcrm_refresh');
+
+  set({
+    user: null,
+    token: null
+  });
+
+  window.location.href = '/login';
+},
 
   loadUser: async () => {
     try {
